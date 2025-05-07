@@ -26,12 +26,12 @@ public class AccountValidator {
         return isValid;
     }
 
-    public boolean isValidRecipientAccount(String accountNumber, String recipientPersonCode) {
-        log.info("Checking if account {} is valid recipient account", accountNumber);
+    public boolean isValidRecipientAccount(Account account, String recipientPersonCode) {
+        log.info("Checking if account {} is valid recipient account", account.getNumber());
         boolean isValid = true;
 
-        isValid &= !isClosed(accountNumber);
-        isValid &= isOwner(accountNumber, recipientPersonCode);
+        isValid &= !account.getClosed();
+        isValid &= recipientPersonCode.equals(account.getOwner());
 
         return isValid;
     }

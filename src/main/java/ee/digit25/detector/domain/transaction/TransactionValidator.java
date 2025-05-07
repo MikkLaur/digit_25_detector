@@ -53,6 +53,6 @@ public class TransactionValidator {
                 && personValidator.isValid(personRecipient)
                 && personValidator.isValid(personSender)
                 && accountValidator.isValidSenderAccount(accountSender, transaction.getAmount(), transaction.getSender())
-                && accountValidator.isValidRecipientAccount(receipentAccount.getNumber(), transaction.getRecipient());
+                && accountValidator.isValidRecipientAccount(receipentAccount, transaction.getRecipient());
     }
 }
