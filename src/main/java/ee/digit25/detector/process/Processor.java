@@ -1,5 +1,7 @@
 package ee.digit25.detector.process;
 
+import ee.digit25.detector.domain.person.external.PersonRequester;
+import ee.digit25.detector.domain.person.external.api.Person;
 import ee.digit25.detector.domain.transaction.TransactionValidator;
 import ee.digit25.detector.domain.transaction.external.TransactionRequester;
 import ee.digit25.detector.domain.transaction.external.TransactionVerifier;
@@ -9,7 +11,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -22,30 +27,37 @@ public class Processor {
 
     private final int TRANSACTION_BATCH_SIZE = 1000;
 
-    private int threadCount;
+    private int threadCount = 2;
 
     private final TransactionRequester requester;
 
     private final TransactionValidator validator;
 
     private final TransactionVerifier verifier;
+    private final PersonRequester personRequester;
 
     private final ExecutorService executorService = Executors.newFixedThreadPool(
-        Runtime.getRuntime().availableProcessors()
+        threadCount
     );
 
-    @Scheduled(fixedDelay = 300) //Runs every 1000 ms after the last run
+    @Scheduled(fixedDelay = 1000) //Runs every 1000 ms after the last run
     public void process() {
         log.info("Starting to process a batch of transactions of size {}", TRANSACTION_BATCH_SIZE);
 
         List<Transaction> transactions = requester.getUnverified(TRANSACTION_BATCH_SIZE);
+        List<String> senderCodes = transactions.stream().map(Transaction::getSender).toList();
+        List<String> recipientCodes = transactions.stream().map(Transaction::getRecipient).toList();
+        List<String> allCodes = new ArrayList<>();
+        allCodes.addAll(senderCodes);
+        allCodes.addAll(recipientCodes);
+        List<Person> persons = personRequester.get(allCodes);
 
         List<CompletableFuture<Void>> futures = transactions
             .stream()
             .map(transaction -> CompletableFuture.runAsync(
                 () -> {
                     try {
-                        if (validator.isLegitimate(transaction)) {
+                        if (validator.isLegitimate(transaction, persons)) {
                             log.info("Legitimate transaction {}", transaction.getId());
                             verifier.verify(transaction);
                         } else {
@@ -57,7 +69,7 @@ public class Processor {
                     }
                 }, executorService
             ))
-            .collect(Collectors.toList());
+            .toList();
 
         // Wait for all transactions to be processed
         CompletableFuture

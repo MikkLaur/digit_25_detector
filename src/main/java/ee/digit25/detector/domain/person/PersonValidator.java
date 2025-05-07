@@ -1,6 +1,7 @@
 package ee.digit25.detector.domain.person;
 
 import ee.digit25.detector.domain.person.external.PersonRequester;
+import ee.digit25.detector.domain.person.external.api.Person;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -30,7 +31,12 @@ public class PersonValidator {
         return requester.get(personCode).getBlacklisted();
     }
 
-    public boolean isValid(String personCode) {
-        return !hasWarrantIssued(personCode) && hasContract(personCode) && !isBlacklisted(personCode);
+    public boolean isValid(Person person) {
+
+        if (person == null) {
+            return false;
+        }
+
+        return !person.getWarrantIssued() && person.getHasContract() && !person.getBlacklisted();
     }
 }
