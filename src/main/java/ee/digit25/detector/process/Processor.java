@@ -1,5 +1,7 @@
 package ee.digit25.detector.process;
 
+import ee.digit25.detector.domain.account.external.AccountRequester;
+import ee.digit25.detector.domain.account.external.api.Account;
 import ee.digit25.detector.domain.device.external.DeviceRequester;
 import ee.digit25.detector.domain.device.external.api.Device;
 import ee.digit25.detector.domain.person.external.PersonRequester;
@@ -38,6 +40,7 @@ public class Processor {
     private final TransactionVerifier verifier;
     private final PersonRequester personRequester;
     private final DeviceRequester deviceRequester;
+    private final AccountRequester accountRequester;
 
     private final ExecutorService executorService = Executors.newFixedThreadPool(
         threadCount
@@ -56,13 +59,19 @@ public class Processor {
         List<Person> persons = personRequester.get(allCodes);
         List<String> macs = transactions.stream().map(Transaction::getDeviceMac).toList();
         List<Device> devices = deviceRequester.get(macs).stream().filter(device -> !device.getIsBlacklisted()).toList();
+        List<String> senderAccountCodes = transactions.stream().map(Transaction::getSenderAccount).toList();
+        List<String> receipentAccountCodes = transactions.stream().map(Transaction::getRecipientAccount).toList();
+        List<String> allAccountCodes = new ArrayList<>();
+        allAccountCodes.addAll(senderAccountCodes);
+        allAccountCodes.addAll(receipentAccountCodes);
+        List<Account> accounts = accountRequester.get(allAccountCodes);
 
         List<CompletableFuture<Void>> futures = transactions
             .stream()
             .map(transaction -> CompletableFuture.runAsync(
                 () -> {
                     try {
-                        if (validator.isLegitimate(transaction, persons, devices)) {
+                        if (validator.isLegitimate(transaction, persons, devices, accounts)) {
                             log.info("Legitimate transaction {}", transaction.getId());
                             verifier.verify(transaction);
                         } else {

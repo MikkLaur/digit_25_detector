@@ -1,6 +1,7 @@
 package ee.digit25.detector.domain.account;
 
 import ee.digit25.detector.domain.account.external.AccountRequester;
+import ee.digit25.detector.domain.account.external.api.Account;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -14,13 +15,13 @@ public class AccountValidator {
 
     private final AccountRequester requester;
 
-    public boolean isValidSenderAccount(String accountNumber, BigDecimal amount, String senderPersonCode) {
-        log.info("Checking if account {} is valid sender account", accountNumber);
+    public boolean isValidSenderAccount(Account account, BigDecimal amount, String senderPersonCode) {
+        log.info("Checking if account {} is valid sender account", account.getNumber());
         boolean isValid = true;
 
-        isValid &= !isClosed(accountNumber);
-        isValid &= isOwner(accountNumber, senderPersonCode);
-        isValid &= hasBalance(accountNumber, amount);
+        isValid &= !account.getClosed();
+        isValid &= senderPersonCode.equals(account.getOwner());
+        isValid &= account.getBalance().compareTo(amount) >= 0;
 
         return isValid;
     }

@@ -1,6 +1,7 @@
 package ee.digit25.detector.domain.transaction;
 
 import ee.digit25.detector.domain.account.AccountValidator;
+import ee.digit25.detector.domain.account.external.api.Account;
 import ee.digit25.detector.domain.device.DeviceValidator;
 import ee.digit25.detector.domain.device.external.api.Device;
 import ee.digit25.detector.domain.person.PersonValidator;
@@ -21,7 +22,7 @@ public class TransactionValidator {
     private final DeviceValidator deviceValidator;
     private final AccountValidator accountValidator;
 
-    public boolean isLegitimate(Transaction transaction, List<Person> persons, List<Device> devices) {
+    public boolean isLegitimate(Transaction transaction, List<Person> persons, List<Device> devices, List<Account> accounts) {
 
         Person personRecipient = persons.stream()
                 .filter(person -> person.getPersonCode().equals(transaction.getRecipient()))
@@ -38,10 +39,20 @@ public class TransactionValidator {
                 .findFirst()
                 .orElse(null);
 
+        Account accountSender = accounts.stream()
+                .filter(account -> account.getNumber().equals(transaction.getSenderAccount()))
+                .findFirst()
+                .orElse(null);
+
+        Account receipentAccount = accounts.stream()
+                .filter(account -> account.getNumber().equals(transaction.getRecipientAccount()))
+                .findFirst()
+                .orElse(null);
+
         return deviceValidator.isValid(deviceCheck)
                 && personValidator.isValid(personRecipient)
                 && personValidator.isValid(personSender)
-                && accountValidator.isValidSenderAccount(transaction.getSenderAccount(), transaction.getAmount(), transaction.getSender())
-                && accountValidator.isValidRecipientAccount(transaction.getRecipientAccount(), transaction.getRecipient());
+                && accountValidator.isValidSenderAccount(accountSender, transaction.getAmount(), transaction.getSender())
+                && accountValidator.isValidRecipientAccount(receipentAccount.getNumber(), transaction.getRecipient());
     }
 }
