@@ -16,12 +16,12 @@ import java.util.List;
 @RequiredArgsConstructor
 public class Processor {
 
-    private final int TRANSACTION_BATCH_SIZE = 10;
+    private final int TRANSACTION_BATCH_SIZE = 1000;
     private final TransactionRequester requester;
     private final TransactionValidator validator;
     private final TransactionVerifier verifier;
 
-    @Scheduled(fixedDelay = 1000) //Runs every 1000 ms after the last run
+    @Scheduled(fixedDelay = 300) //Runs every 1000 ms after the last run
     public void process() {
         log.info("Starting to process a batch of transactions of size {}", TRANSACTION_BATCH_SIZE);
 
