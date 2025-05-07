@@ -1,5 +1,7 @@
 package ee.digit25.detector.process;
 
+import ee.digit25.detector.domain.device.external.DeviceRequester;
+import ee.digit25.detector.domain.device.external.api.Device;
 import ee.digit25.detector.domain.person.external.PersonRequester;
 import ee.digit25.detector.domain.person.external.api.Person;
 import ee.digit25.detector.domain.transaction.TransactionValidator;
@@ -35,6 +37,7 @@ public class Processor {
 
     private final TransactionVerifier verifier;
     private final PersonRequester personRequester;
+    private final DeviceRequester deviceRequester;
 
     private final ExecutorService executorService = Executors.newFixedThreadPool(
         threadCount
@@ -51,13 +54,15 @@ public class Processor {
         allCodes.addAll(senderCodes);
         allCodes.addAll(recipientCodes);
         List<Person> persons = personRequester.get(allCodes);
+        List<String> macs = transactions.stream().map(Transaction::getDeviceMac).toList();
+        List<Device> devices = deviceRequester.get(macs);
 
         List<CompletableFuture<Void>> futures = transactions
             .stream()
             .map(transaction -> CompletableFuture.runAsync(
                 () -> {
                     try {
-                        if (validator.isLegitimate(transaction, persons)) {
+                        if (validator.isLegitimate(transaction, persons, devices)) {
                             log.info("Legitimate transaction {}", transaction.getId());
                             verifier.verify(transaction);
                         } else {
