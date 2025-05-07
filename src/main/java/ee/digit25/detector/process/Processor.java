@@ -31,7 +31,7 @@ public class Processor {
 
     private final int TRANSACTION_BATCH_SIZE = 1600;
 
-    private int threadCount = 256;
+    private int threadCount = 64;
 
     private final TransactionRequester requester;
 
@@ -46,7 +46,7 @@ public class Processor {
         threadCount
     );
 
-    @Scheduled(fixedDelay = 25) //Runs every x ms after the last run
+    @Scheduled(fixedDelay = 50) //Runs every x ms after the last run
     public void process() {
         log.info("Starting to process a batch of transactions of size {}", TRANSACTION_BATCH_SIZE);
 
