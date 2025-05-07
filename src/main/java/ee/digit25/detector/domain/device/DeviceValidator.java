@@ -20,6 +20,6 @@ public class DeviceValidator {
 
         log.info("Validating device {}", device.getMac());
 
-        return device.getIsBlacklisted();
+        return !device.getIsBlacklisted();
     }
 }

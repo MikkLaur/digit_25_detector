@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class Processor {
 
-    private final int TRANSACTION_BATCH_SIZE = 1000;
+    private final int TRANSACTION_BATCH_SIZE = 800;
 
     private int threadCount = 2;
 
@@ -55,7 +55,7 @@ public class Processor {
         allCodes.addAll(recipientCodes);
         List<Person> persons = personRequester.get(allCodes);
         List<String> macs = transactions.stream().map(Transaction::getDeviceMac).toList();
-        List<Device> devices = deviceRequester.get(macs);
+        List<Device> devices = deviceRequester.get(macs).stream().filter(device -> !device.getIsBlacklisted()).toList();
 
         List<CompletableFuture<Void>> futures = transactions
             .stream()
